@@ -64,6 +64,7 @@ async function call(method, path, body) {
   if (!res.ok || json.success === false) {
     const e = new Error(json.message || `Error ${res.status}`);
     e.status = res.status;
+    e.data = json.data;
     throw e;
   }
   return json.data;
@@ -85,7 +86,12 @@ export const api = {
   sell: (d) => call("POST", "/sale", d),
   holds: () => call("GET", "/hold"),
   hold: (d) => call("POST", "/hold", d),
-  unhold: (id) => call("DELETE", `/hold/${id}`), // resume (take it back) or delete
+  unhold: (id, d) => call("DELETE", `/hold/${id}`, d), // delete (a layaway: { approver, give_back })
+  resumeHold: (id) => call("POST", `/hold/${id}/resume`), // plain hold leaves the list; a layaway stays until paid
+  holdDeposit: (id, d) => call("POST", `/hold/${id}/deposit`, d),
+  cashMove: (d) => call("POST", "/shift/cash", d),
+  openExchanges: () => call("GET", "/exchange/open"),
+  exchangeCash: (id) => call("POST", `/refund/${encodeURIComponent(id)}/exchange-cash`),
   sales: (params = {}) => call("GET", `/sale?${new URLSearchParams(params)}`),
   report: (params = {}) => call("GET", `/report?${new URLSearchParams(params)}`),
   display: (mode, data) => call("PUT", "/display", { mode, data }),
@@ -93,4 +99,8 @@ export const api = {
   discardSale: (id, d) => call("POST", `/sale/${encodeURIComponent(id)}/discard`, d),
   refundSale: (id, d) => call("POST", `/sale/${encodeURIComponent(id)}/refund`, d),
   receipt: (id) => call("GET", `/receipt/${encodeURIComponent(id)}`),
+  customers: (q) => call("GET", `/customer?${new URLSearchParams({ q })}`),
+  customer: (id) => call("GET", `/customer/${encodeURIComponent(id)}`),
+  addCustomer: (d) => call("POST", "/customer", d),
+  khqrCheck: (md5) => call("POST", "/khqr/check", { md5 }),
 };
