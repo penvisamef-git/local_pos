@@ -8,7 +8,9 @@ npm start          # development → http://localhost:3001 (calls REACT_APP_API_
 npm run build      # production → local_pos_api serves the build at http://localhost:8087
 ```
 
-**Colours** follow the admin web: *General settings → System theme* (Forest / Ocean / Candy / Navy & Gold). The theme comes with the sync (every 5 min, or tap Sync) and is kept on this computer; the customer display follows it too (`src/theme.js`).
+**Colours** follow the admin web: *General settings → System theme* (24 themes; the 20 made from seeds are in `src/themeSeeds.js`, a copy of the admin's). The theme comes with the sync (every 5 min, or tap Sync) and is kept on this computer; the customer display follows it too (`src/theme.js`).
+
+**My colours** (profile menu → My colours): each cashier can pick his own colours (21 choices, or "Shop colours" = follow the admin). Saved per cashier on this computer (`localStorage pos_theme_user_<id>`), applied when he logs in; the next cashier gets his own choice or the shop's colours. The customer display follows the colours on the POS screen (the theme key goes with every display message). Same in the Cloud POS.
 
 Fonts (Khmer + Latin) are bundled (`@fontsource-variable/*`) so the screen looks right offline.
 
@@ -28,8 +30,9 @@ Fonts (Khmer + Latin) are bundled (`@fontsource-variable/*`) so the screen looks
    - The receipt prints at once (80 mm), *Enter* starts the next sale.
 5. **My report** (menu) — sales of the day: total, invoices, items, discounts, payments, by hour, top items, last 7 days, shifts; pick another day; print an 80 mm summary. A cashier sees only their own sales; a shop manager sees all staff (or one person) and *by cashier*.
 6. **Customer display** (menu) — opens `/display` in a new window: drag it to the second screen and press *Full screen*. It shows *Welcome* (shop, clock) → the items and the total (USD + ៛) → what was paid and the change → *Thank you* (20 s). Khmer + English together. Several displays can be open; a tablet works too if local_pos_api runs with `HOST=0.0.0.0`.
-7. **Invoices** (menu) — this shift's invoices, sent / waiting / problem, reprint. Tab **Not sent** (or tap the red bar at the bottom): invoices the cloud refused, from any shift, with the reason → **Try again** after fixing it in the admin, or **Remove** (reason + shop manager PIN) when it can never be sent; a removed invoice is kept here, never sent, and left out of totals.
-8. **Close shift** (menu) — count the drawer → expected vs counted → shift report (Z) printed → log out.
+7. **Refund / void** — Invoices → open an invoice → **Refund / void**: pick the items and how many (or *Void the whole invoice*), a reason, how the money goes back; a cashier needs a shop manager's PIN. A refund slip prints; stock goes back up; the shift's expected cash goes down. A partly refunded invoice can be refunded again (what is left).
+8. **Invoices** (menu) — this shift's invoices, sent / waiting / problem, reprint. Tab **Not sent** (or tap the red bar at the bottom): invoices the cloud refused, from any shift, with the reason → **Try again** after fixing it in the admin, or **Remove** (reason + shop manager PIN) when it can never be sent; a removed invoice is kept here, never sent, and left out of totals.
+9. **Close shift** (menu) — count the drawer → expected vs counted → shift report (Z) printed → log out.
 
 Top bar: shop + shift, search, **Online / Offline** with the number of sales waiting to be sent (tap = sync now), user menu (invoices, close shift, language, unlink POS for managers, log out).
 
@@ -40,5 +43,9 @@ Top bar: shop + shift, search, **Online / Offline** with the number of sales wai
 | `src/App.jsx` | link → login → open shift → sell |
 | `src/api.js` | calls `/api/pos/*` (token in `x-pos-token`, this tab only) |
 | `src/cart.js` | preview of the totals / change (the server recalculates) |
-| `src/screens/` | Pair, Login, OpenShift, Sell, PayDialog, DiscountDialog, Receipt (80 mm print), History, CloseShift, HoldDialog, Report, CustomerDisplay (`src/display.css`) |
+| `src/screens/` | Pair, Login, OpenShift, Sell, PayDialog, DiscountDialog, Receipt (80 mm print), History, CloseShift, HoldDialog, Report, RefundDialog, CustomerDisplay (`src/display.css`) |
 | `src/pos.css` | the whole look (touch first) + the receipt paper |
+
+**Receipt style**: the admin picks one of 24 styles (POS devices → Receipt style); it comes with the sync as `setting.receipt_template` and `screens/Receipt.jsx` prints with it (`src/receiptTemplates.js`, `screens/receipt.css` — copies of the admin's).
+
+**QR to scan**: a payment method with *Show a QR* switched on in the admin (`qr_image`) shows that QR big on the customer display while the cashier has it selected in Pay (with the amount due), and a small copy in the Pay dialog. local_pos_api keeps the QR picture inside the local data (data: URI, `keepQrOffline` in `src/sync.js`), so it also shows without internet. Same in the Cloud POS (the service worker caches the picture).

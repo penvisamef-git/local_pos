@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { api, session, setLoggedOutHandler } from "./api";
 import { L } from "./i18n";
-import { applyTheme } from "./theme";
+import { applyTheme, setThemeUser } from "./theme";
 import Pair from "./screens/Pair";
 import Login from "./screens/Login";
 import OpenShift from "./screens/OpenShift";
@@ -36,6 +36,11 @@ export default function App() {
     const t = setInterval(refresh, 10000); // online / waiting sales in the top bar · unlinked by the admin
     return () => clearInterval(t);
   }, [refresh]);
+
+  // the cashier's own colours while he is logged in (menu → My colours)
+  useEffect(() => {
+    setThemeUser(user?._id || null);
+  }, [user]);
 
   const logout = async () => {
     await api.logout().catch(() => {});

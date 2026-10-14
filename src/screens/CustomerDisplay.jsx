@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { CheckCircle2, Maximize, ShoppingBag, WifiOff } from "lucide-react";
 import { BASE } from "../api";
-import { applyTheme } from "../theme";
+import { applyTheme, showTheme } from "../theme";
 import { usd, khr, qtyText } from "../i18n";
 import "../display.css";
 
@@ -32,6 +32,7 @@ export default function CustomerDisplay() {
   useEffect(() => {
     document.title = "Customer display";
     let es;
+    let posTheme = ""; // colours of the POS screen (the cashier's own, else the shop's)
     const loadShop = () =>
       fetch(`${BASE}/display`)
         .then((r) => r.json())
@@ -39,6 +40,8 @@ export default function CustomerDisplay() {
           if (!j.data) return;
           setShop(j.data.shop);
           applyTheme(j.data.shop?.ui_theme);
+          posTheme = j.data.data?.theme || posTheme;
+          if (posTheme) showTheme(posTheme);
         })
         .catch(() => {});
     loadShop();
@@ -52,6 +55,10 @@ export default function CustomerDisplay() {
     es.onmessage = (e) => {
       try {
         const v = JSON.parse(e.data);
+        if (v.data?.theme) {
+          posTheme = v.data.theme;
+          showTheme(posTheme);
+        }
         // an old "thank you" (screen opened later) → welcome
         setView(v.mode === "done" && Date.now() - (v.at || 0) > THANKS_MS ? { mode: "idle", data: {} } : v);
       } catch {
@@ -114,6 +121,18 @@ export default function CustomerDisplay() {
       {/* ---------- cart / pay ---------- */}
       {(view.mode === "cart" || view.mode === "pay") && (
         <div className="cd-sale">
+          {view.mode === "pay" && d.pay?.qr?.image ? (
+            <section className="cd-qr">
+              <Two className="cd-qr-title" kh="ស្កេនដើម្បីបង់ប្រាក់" en="Scan to pay" />
+              <div className="cd-qr-card">
+                <img src={d.pay.qr.image} alt="QR" />
+              </div>
+              <div className="cd-qr-amount">
+                <span>{d.pay.qr.name}</span>
+                <b>{d.pay.qr.khr ? khr(d.pay.qr.amount) : usd(d.pay.qr.amount)}</b>
+              </div>
+            </section>
+          ) : (
           <section className="cd-list">
             <header>
               <Two kh="ទំនិញរបស់អ្នក" en="Your items" />
@@ -137,6 +156,7 @@ export default function CustomerDisplay() {
               ))}
             </div>
           </section>
+          )}
 
           <section className="cd-side">
             {company && <div className="cd-side-shop">{company}</div>}

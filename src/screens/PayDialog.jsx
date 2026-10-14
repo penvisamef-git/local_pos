@@ -72,10 +72,13 @@ export default function PayDialog({ catalog, totals: t, lines, discount, stockAp
     }
   };
   // the customer display follows what is paid / the change
-  const payKey = `${method?._id}|${st.paid}|${st.change}|${st.remaining}|${st.enough}`;
+  const payKey = `${method?._id}|${amount}|${st.paid}|${st.change}|${st.remaining}|${st.enough}`;
   useEffect(() => {
     if (!onState) return undefined;
-    const timer = setTimeout(() => onState({ method: method ? nm(method) : "", paid: st.paid, remaining: st.remaining, remaining_khr: st.remainingKhr, enough: st.enough, change: st.change, give_usd: st.giveUsd, give_khr: st.giveKhr }), 150);
+    // QR of this method (uploaded in the admin) → the customer scans it on the display
+    const qrDue = method && !st.enough ? (Number(amount) > 0 ? Number(amount) : dueIn(method)) : 0;
+    const qr = method?.qr_image && !st.enough ? { image: method.qr_image, name: nm(method), amount: qrDue, khr: isKhr(method) } : null;
+    const timer = setTimeout(() => onState({ qr, method: method ? nm(method) : "", paid: st.paid, remaining: st.remaining, remaining_khr: st.remainingKhr, enough: st.enough, change: st.change, give_usd: st.giveUsd, give_khr: st.giveKhr }), 150);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [payKey]);
@@ -151,6 +154,12 @@ export default function PayDialog({ catalog, totals: t, lines, discount, stockAp
                     <button key={v} type="button" onClick={() => setAmount(String(v))}>{isKhr(method) ? khr(v) : usd(v)}</button>
                   ))}
                 </div>
+                {method.qr_image && (
+                  <div className="pos-pay-qr">
+                    <img src={method.qr_image} alt="QR" />
+                    <span>{L("QR នេះកំពុងបង្ហាញលើអេក្រង់អតិថិជន — ឱ្យអតិថិជនស្កេនបង់", "This QR is on the customer display — ask the customer to scan and pay")}</span>
+                  </div>
+                )}
                 {(method.requires_reference || method.type !== "cash") && (
                   <input className="pos-ref" value={reference} onChange={(e) => setReference(e.target.value)} placeholder={method.requires_reference ? L("លេខយោង (ចាំបាច់)", "Reference no. (required)") : L("លេខយោង", "Reference no.")} />
                 )}

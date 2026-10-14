@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Ban, BarChart3, ChevronDown, Monitor, PauseCircle, History as HistoryIcon, Languages, LogOut, Minus, Package, Percent, Plus, RefreshCw, ScanBarcode, Search, Trash2, Unplug, Wallet, X } from "lucide-react";
+import { Ban, BarChart3, ChevronDown, Monitor, Palette, PauseCircle, History as HistoryIcon, Languages, LogOut, Minus, Package, Percent, Plus, RefreshCw, ScanBarcode, Search, Trash2, Unplug, Wallet, X } from "lucide-react";
 import { api } from "../api";
 import { L, LANG, nm, setLang, usd, khr, qtyText } from "../i18n";
 import { priceOf, totals as calcTotals } from "../cart";
-import { applyTheme, currentTheme } from "../theme";
+import { applyTheme, currentTheme, onScreenTheme, screenTheme } from "../theme";
 import StatusDot from "../parts/StatusDot";
 import PayDialog from "./PayDialog";
 import DiscountDialog from "./DiscountDialog";
@@ -14,6 +14,7 @@ import HoldList, { HoldNameDialog } from "./HoldDialog";
 import StockApproveDialog from "./StockApproveDialog";
 import Report from "./Report";
 import RefundDialog from "./RefundDialog";
+import ThemeDialog from "./ThemeDialog";
 
 let seq = 0;
 const optionText = (v) => (v.options || []).map((o) => nm(o)).join(" / ");
@@ -274,10 +275,17 @@ export default function Sell({ status, user, refresh, onLogout }) {
 
   // ---------- customer display (second screen) ----------
   const shown2 = useRef("idle"); // what the display shows now
+  const lastShown = useRef({ mode: "idle", data: {} });
   const show = (mode, data = {}) => {
     shown2.current = mode;
-    api.display(mode, data).catch(() => {});
+    lastShown.current = { mode, data };
+    api.display(mode, { ...data, theme: screenTheme() }).catch(() => {}); // the display uses the cashier's colours too
   };
+  // cashier changed his colours → the customer display follows at once
+  useEffect(() => {
+    show("idle"); // a cashier just logged in → welcome screen in his colours
+    return onScreenTheme(() => show(lastShown.current.mode, lastShown.current.data));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const cartView = () => ({
     items: lines.map((l) => ({
       key: l.key,
@@ -402,6 +410,7 @@ export default function Sell({ status, user, refresh, onLogout }) {
                 <button type="button" onClick={openDisplay}><Monitor size={17} />{L("អេក្រង់អតិថិជន", "Customer display")}{status.display_screens ? " ✓" : ""}</button>
                 <button type="button" onClick={() => setDialog("holds")}><PauseCircle size={17} />{L("កន្ត្រកដែលរក្សាទុក", "Held carts")}{status.held_carts ? ` (${status.held_carts})` : ""}</button>
                 <button type="button" onClick={() => setDialog("close")}><Wallet size={17} />{L("បិទវេន", "Close shift")}</button>
+                <button type="button" onClick={() => setDialog("theme")}><Palette size={17} />{L("ពណ៌របស់ខ្ញុំ", "My colours")}</button>
                 <button type="button" onClick={() => setLang(LANG === "kh" ? "en" : "kh")}><Languages size={17} />{LANG === "kh" ? "English" : "ខ្មែរ"}</button>
                 {user.is_manager && (
                   <button type="button" onClick={async () => { if (window.confirm(L("ផ្តាច់ POS នេះពីហាង?", "Unlink this POS from the shop?"))) { try { await api.unpair(); onLogout(); refresh(); } catch (e) { toast(e.message); } } }}>
@@ -571,6 +580,7 @@ export default function Sell({ status, user, refresh, onLogout }) {
         />
       )}
       {dialog === "hold" && <HoldNameDialog count={t.count} total={t.total} onClose={() => setDialog(null)} onHold={holdCart} />}
+      {dialog === "theme" && <ThemeDialog onClose={() => setDialog(null)} />}
       {dialog === "holds" && <HoldList cartHasItems={lines.length > 0} onClose={() => setDialog(null)} onResume={resume} />}
             {dialog === "discount" && (
         <DiscountDialog user={user} current={discount} subtotal={t.subtotal} onClose={() => setDialog(null)} onApply={(d) => { setDiscount(d); setDialog(null); }} />

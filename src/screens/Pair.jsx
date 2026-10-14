@@ -31,7 +31,7 @@ export default function Pair({ status, onDone }) {
         <button type="button" className="pos-lang" onClick={() => setLang(LANG === "kh" ? "en" : "kh")}>{LANG === "kh" ? "EN" : "ខ្មែរ"}</button>
         <div className="pos-pair-icon"><Link2 size={30} /></div>
         <h1>{L("ភ្ជាប់ POS នេះទៅហាង", "Link this POS to its shop")}</h1>
-        <p className="pos-muted">{L("នៅ Admin web: ការតភ្ជាប់ → ម៉ាស៊ីន POS → បន្ថែម POS ហើយវាយលេខកូដ 6 ខ្ទង់នៅទីនេះ។", "In the admin web: CONNECT → POS devices → Add POS, then type the 6-digit code here.")}</p>
+        <p className="pos-muted">{L("នៅ Admin web: ការតភ្ជាប់ → ម៉ាស៊ីន POS → បន្ថែម POS ក្នុងម៉ាស៊ីន ហើយវាយលេខកូដ 6 ខ្ទង់នៅទីនេះ។", "In the admin web: CONNECT → POS devices → Add local POS, then type the 6-digit code here.")}</p>
         <div className="pos-code">
           {Array.from({ length: 6 }).map((_, i) => (
             <span key={i} className={code[i] ? "on" : ""}>{code[i] || ""}</span>
